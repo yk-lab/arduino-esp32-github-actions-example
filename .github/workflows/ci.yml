@@ -1,0 +1,114 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - "main"
+    tags:
+      - "v*.*.*"
+  pull_request:
+    branches:
+      - "**"
+  workflow_dispatch:
+
+env:
+  SKETCHES_REPORTS_PATH: sketches-reports
+  ARDUINO_DIRECTORY: /home/runner/.arduino15
+
+jobs:
+  build:
+    name: ${{ matrix.board.name }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        board:
+          - fqbn: esp32:esp32:esp32:PSRAM=disabled,PartitionScheme=no_ota,CPUFreq=240,FlashMode=qio,FlashFreq=80,FlashSize=4M,UploadSpeed=921600,DebugLevel=none
+            name: esp32:esp32:esp32
+            build-name: esp32.esp32.esp32
+            upload-name: esp32
+            type: esp32
+
+        # make board type-specific customizations to the matrix jobs
+        include:
+          # ESP32 boards
+          - board:
+              type: esp32
+            platforms: |
+              # Install ESP32 platform via Boards Manager
+              - name: esp32:esp32
+                source-url: https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+            libraries: |
+              - name: Arduino_ESP32_OTA
+            sketch-paths:
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Debug
+        if: matrix.board.type == 'esp32'
+        run: |
+          env
+
+      - name: Install ESP32 platform dependencies
+        if: matrix.board.type == 'esp32'
+        run: pip3 install pyserial
+
+      - name: Compile sketch
+        uses: arduino/compile-sketches@v1.0.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          fqbn: ${{ matrix.board.fqbn }}
+          platforms: ${{ matrix.platforms }}
+          libraries: |
+            - name: NTPClient
+            - name: PubSubClient
+            - name: ArduinoJson
+            - name: CRC
+          cli-compile-flags: |
+            - --export-binaries
+          sketch-paths: |
+            - src/main
+          # enable-deltas-report: true
+          enable-warnings-report: true
+          sketches-report-path: ${{ env.SKETCHES_REPORTS_PATH }}
+          verbose: true
+
+      - name: Install zip
+        uses: montudor/action-zip@v1
+
+      - name: Zip output
+        run: zip -qq -r main-${{ matrix.board.upload-name }}.zip ${{ matrix.board.build-name }}
+        working-directory: src/main/build
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          if-no-files-found: error
+          name: main-${{ matrix.board.upload-name }}
+          path: "src/main/build/main-${{ matrix.board.upload-name }}.zip"
+
+      # - name: Save sketches report as workflow artifact
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     if-no-files-found: error
+      #     name: ${{ env.SKETCHES_REPORTS_PATH }}
+      #     path: ${{ env.SKETCHES_REPORTS_PATH }}
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    name: github release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: main-esp32
+          path: main-esp32
+      - uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ github.ref }}
+          draft: true
+          files: main-*/*

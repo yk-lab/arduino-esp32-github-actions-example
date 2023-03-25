@@ -1,0 +1,47 @@
+{
+    "version": 4,
+        "env": {
+            "APP_PATH": "/Applications/Arduino.app/Contents/Java",
+            "PACKAGES_PATH": "${env:HOME}/Library/Arduino15/packages",
+            "USER_PATH": "${env:HOME}/Documents/Arduino"
+        },
+        "configurations": [
+        {
+            "name": "Mac",
+            "compilerPath": "/usr/bin/clang",
+            "compilerArgs": [],
+            "intelliSenseMode": "macos-clang-x64",
+            "includePath": [
+                "${workspaceFolder}/src/main/**",
+                "${env:APP_PATH}/tools/**",
+                "${env:APP_PATH}/hardware/**",
+                "${env:APP_PATH}/libraries/**",
+                "${env:USER_PATH}/libraries/**",
+                "${env:PACKAGES_PATH}/**"
+            ],
+            "forcedInclude": [
+                "${env:APP_PATH}/hardware/arduino/avr/cores/arduino/Arduino.h"
+            ],
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "defines": [
+                "ARDUINO"
+            ]
+        },
+        {
+            "name": "Win32",
+            "compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.16.27023/bin/Hostx64/x64/cl.exe",
+            "compilerArgs": [],
+            "intelliSenseMode": "msvc-x64",
+            "includePath": [
+                "${workspaceFolder}"
+            ],
+            "forcedInclude": [
+                "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\cores\\arduino\\Arduino.h"
+            ],
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "defines": []
+        }
+    ]
+}
