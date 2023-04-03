@@ -57,7 +57,7 @@ jobs:
         run: pip3 install pyserial
 
       - name: Compile sketch
-        uses: arduino/compile-sketches@v1.0.1
+        uses: arduino/compile-sketches@v1.1.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           fqbn: ${{ matrix.board.fqbn }}
